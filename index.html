@@ -31,7 +31,7 @@
 			} )
 
 			//Creación de skydome
-			var geometrySky = new THREE.SphereGeometry(350000, 600, 600);
+			var geometrySky = new THREE.SphereGeometry(35000, 600, 600);
 			var materialSky = new THREE.MeshBasicMaterial();
 			materialSky.map = THREE.ImageUtils.loadTexture('assets/sky360.jpg');
 			materialSky.side = THREE.BackSide;
@@ -42,13 +42,6 @@
 			skydome.rotation.z = 8;
 			skydome.rotation.y = 4;
 		
-
-			//add geometry
-/* 			const g_sun = new THREE.SphereGeometry(100,200,200);
-			const g_earth = new THREE.SphereGeometry(18,200,200);
-			const g_mercury = new THREE.SphereGeometry(7,200,200);
-			const g_venus = new THREE.SphereGeometry(15,200,200);
-			const g_moon = new THREE.SphereGeometry(3,200,200); */
 
 			//Geometrias para planetas
 			const g_sun = new THREE.SphereGeometry(250,200,200);
@@ -62,7 +55,7 @@
 			const g_uranus = new THREE.SphereGeometry(45,200,200);
 			const g_neptune = new THREE.SphereGeometry(45,200,200);
 
-			//Material para planeras
+			//Material para planetas
 			const m_sun = new THREE.MeshBasicMaterial({
 				map: new THREE.TextureLoader().load('assets/text_sun.jpg')
 			});
