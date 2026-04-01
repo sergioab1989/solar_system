@@ -2,89 +2,299 @@ import * as THREE from "./js/three.module.js";
 import { OrbitControls } from "./js/OrbitControls.js";
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 300000);
-const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+scene.background = new THREE.Color(0x000000);
+var camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight ,0.00001,300000);
 
-const textureLoader = new THREE.TextureLoader();
+var renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
 
-// Base de datos de planetas
-const planetsData = [
-    { name: "mercury", radius: 10, texture: 'assets/text_mercury.jpg', orbitDist: 400, speed: 0.008 },
-    { name: "venus",   radius: 15, texture: 'assets/text_venus.jpg',   orbitDist: 650, speed: 0.007 },
-    { name: "earth",   radius: 35, texture: 'assets/text_earth_daymap.jpg', orbitDist: 900, speed: 0.005 },
-    { name: "mars",    radius: 15, texture: 'assets/text_mars.jpg',    orbitDist: 1150, speed: 0.003 },
-    { name: "jupiter", radius: 70, texture: 'assets/text_jupiter.jpg', orbitDist: 1400, speed: 0.002 },
-    
-];
+window.addEventListener( 'resize', function()
+{
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    renderer.setSize(width,height);
+    camera.aspect = width/height;
+    camera.updateProjectionMatrix();
+} )
 
-// Arreglo para guardar las referencias a los objetos 3D y poder animarlos luego
-const planets = [];
+//Creación de skydome
+var geometrySky = new THREE.SphereGeometry(35000, 600, 600);
+var materialSky = new THREE.MeshBasicMaterial();
+materialSky.map = THREE.ImageUtils.loadTexture('assets/sky360.jpg');
+materialSky.side = THREE.BackSide;
+var skydome = new THREE.Mesh(geometrySky, materialSky);
+scene.add(skydome);
 
-// Función para generar un planeta y su línea de órbita
-function createPlanet(data) {
-    // Planeta
-    const geometry = new THREE.SphereGeometry(data.radius, 64, 64); // <- Mejor rendimiento
-    const material = new THREE.MeshBasicMaterial({ map: textureLoader.load(data.texture) });
-    const mesh = new THREE.Mesh(geometry, material);
-    
-    // Línea de órbita (TorusGeometry)
-    const orbitGeo = new THREE.TorusGeometry(data.orbitDist, 0.2, 5, 100);
-    const orbitMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-    const orbitMesh = new THREE.Mesh(orbitGeo, orbitMat);
-    orbitMesh.rotation.x = Math.PI / 2; // Equivalente a tu 1.5708
+//skydome.rotation.x = 1;
+skydome.rotation.z = 8;
+skydome.rotation.y = 4;
 
-    // Agregamos a la escena
-    scene.add(mesh);
-    scene.add(orbitMesh);
 
-    // Retornamos un objeto con la malla y sus datos de movimiento
-    return {
-        mesh: mesh,
-        orbitDist: data.orbitDist,
-        speed: data.speed,
-        angle: Math.random() * Math.PI * 2 // Empiezan en posiciones aleatorias de su órbita
-    };
-}
+//Geometrias para planetas
+const g_sun = new THREE.SphereGeometry(250,200,200);
+const g_mercury = new THREE.SphereGeometry(10,200,200);
+const g_venus = new THREE.SphereGeometry(15,200,200);
+const g_earth = new THREE.SphereGeometry(35,200,200);
+const g_moon = new THREE.SphereGeometry(5,200,200);
+const g_mars = new THREE.SphereGeometry(15,200,200);
+const g_jupiter = new THREE.SphereGeometry(70,200,200);
+const g_saturn = new THREE.SphereGeometry(60,200,200);
+const g_uranus = new THREE.SphereGeometry(45,200,200);
+const g_neptune = new THREE.SphereGeometry(45,200,200);
 
-// Construir el sistema solar iterando sobre la "base de datos"
-planetsData.forEach(data => {
-    const newPlanet = createPlanet(data);
-    planets.push(newPlanet);
+//Material para planetas
+const m_sun = new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load('assets/text_sun.jpg')
+});
+const m_mercury = new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load('assets/text_mercury.jpg')
+});						
+const m_venus = new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load('assets/text_venus.jpg')
+});
+const m_earth = new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load('assets/text_earth_daymap.jpg')
+});
+const m_moon = new THREE.MeshBasicMaterial( {
+    map: new THREE.TextureLoader().load('assets/text_moon.jpg')
+} );
+const m_mars = new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load('assets/text_mars.jpg')
+});
+const m_jupiter = new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load('assets/text_jupiter.jpg')
+});
+const m_saturn = new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load('assets/text_saturn.jpg')
+});
+const m_uranus = new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load('assets/text_uranus.jpg')
+});
+const m_neptune = new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load('assets/text_neptune.jpg')
 });
 
-// El Sol se crea aparte porque no orbita
-const sunGeo = new THREE.SphereGeometry(250, 64, 64);
-const sunMat = new THREE.MeshBasicMaterial({ map: textureLoader.load('assets/text_sun.jpg') });
-const sun = new THREE.Mesh(sunGeo, sunMat);
-scene.add(sun);
+//agrear geometria y material a objeto
+const sun = new THREE.Mesh( g_sun, m_sun );
+const p_mercury = new THREE.Mesh( g_mercury, m_mercury );
+const p_venus = new THREE.Mesh( g_venus, m_venus );
+const p_earth = new THREE.Mesh( g_earth, m_earth );
+const moon = new THREE.Mesh( g_moon, m_moon );
+const p_mars = new THREE.Mesh( g_mars,m_mars );
+const p_jupiter = new THREE.Mesh( g_jupiter,m_jupiter );
+const p_saturn = new THREE.Mesh( g_jupiter,m_saturn );
+const p_uranus = new THREE.Mesh( g_uranus,m_uranus );
+const p_neptune = new THREE.Mesh( g_neptune,m_neptune );
 
-function animate() {
+//Agregar planetas a la Escena
+scene.add( sun,p_mercury,p_venus,p_earth,moon,p_mars,p_jupiter,p_saturn,p_uranus,p_neptune );
+
+var dist_orbit_mercury = 400;
+var dist_orbit_venus = 650;
+var dist_orbit_earth = 900;
+var dist_orbit_moon = 60;
+var dist_orbit_mars = 1150;
+var dist_orbit_jupiter = 1400;
+var dist_orbit_saturn = 1650;
+var dist_orbit_uranus = 1900;
+var dist_orbit_neptune = 2150;
+
+const g_torus_mercury = new THREE.TorusGeometry( dist_orbit_mercury, 0.2, 5, 500 );
+const g_torus_venus = new THREE.TorusGeometry( dist_orbit_venus, 0.2, 5, 500 );
+const g_torus_earth = new THREE.TorusGeometry( dist_orbit_earth, 0.2, 5, 500 );
+const g_torus_mars = new THREE.TorusGeometry( dist_orbit_mars, 0.2, 5, 500 );
+const g_torus_jupiter = new THREE.TorusGeometry( dist_orbit_jupiter, 0.2, 5, 500 );
+const g_torus_saturn = new THREE.TorusGeometry( dist_orbit_saturn, 0.2, 5, 500 );
+const g_torus_uranus = new THREE.TorusGeometry( dist_orbit_uranus, 0.2, 5, 500 );
+const g_torus_neptune = new THREE.TorusGeometry( dist_orbit_neptune, 0.2, 5, 500 );
+const material_torus = new THREE.MeshBasicMaterial( { color: 0xffffff, side: THREE.DoubleSide } );
+const orbit_venus = new THREE.Mesh( g_torus_venus, material_torus );
+const orbit_mercury = new THREE.Mesh( g_torus_mercury, material_torus );
+const orbit_earth = new THREE.Mesh( g_torus_earth, material_torus );
+const orbit_mars = new THREE.Mesh( g_torus_mars, material_torus );
+const orbit_jupiter = new THREE.Mesh( g_torus_jupiter, material_torus );
+const orbit_saturn = new THREE.Mesh( g_torus_saturn, material_torus );
+const orbit_uranus = new THREE.Mesh( g_torus_uranus, material_torus );
+const orbit_neptune = new THREE.Mesh( g_torus_neptune, material_torus );
+
+const g_ring_saturn = new THREE.RingGeometry( 85, 145, 200 );
+const text_ring_saturn = new THREE.TextureLoader().load(
+    'assets/saturn_ring_alpha.png'
+);
+const material_ring_saturn = new THREE.ShaderMaterial({
+    uniforms: {
+    texture: { value: text_ring_saturn },
+    innerRadius: { value: 85 },
+    outerRadius: { value: 145 }
+    },
+    vertexShader: `
+    varying vec3 vPos;
+    
+    void main() {
+        vPos = position;
+        vec3 viewPosition = (modelViewMatrix * vec4(position, 1.)).xyz;
+        gl_Position = projectionMatrix * vec4(viewPosition, 1.);
+    }
+    `,
+    fragmentShader: `
+    uniform sampler2D texture;
+    uniform float innerRadius;
+    uniform float outerRadius;
+
+    varying vec3 vPos;
+
+    vec4 color() {
+        vec2 uv = vec2(0);
+        uv.x = (length(vPos) - innerRadius) / (outerRadius - innerRadius);
+        if (uv.x < 0.0 || uv.x > 1.0) {
+        discard;
+        }
+        
+        vec4 pixel = texture2D(texture, uv);
+        return pixel;
+    }
+
+    void main() {
+        gl_FragColor = color();
+    }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide
+});
+const ring_saturn = new THREE.Mesh( g_ring_saturn,material_ring_saturn );
+
+
+//Agregar orbitas a la escena
+scene.add( orbit_venus, orbit_mercury,orbit_earth,orbit_mars,orbit_jupiter,orbit_saturn,orbit_uranus,orbit_neptune,ring_saturn );
+
+//Rotación de orbitas paralelas al sol
+var rot_orbit = 1.5708;
+orbit_earth.rotation.x = rot_orbit;
+orbit_venus.rotation.x = rot_orbit;
+orbit_mercury.rotation.x = rot_orbit;
+orbit_mars.rotation.x = rot_orbit;
+orbit_jupiter.rotation.x = rot_orbit;
+orbit_saturn.rotation.x = rot_orbit;		
+orbit_uranus.rotation.x = rot_orbit;
+orbit_neptune.rotation.x = rot_orbit;		
+ring_saturn.rotation.x = 1.3;
+ring_saturn.rotation.y = 0.3;
+p_saturn.rotation.x = -0.3;
+p_saturn.rotation.z = 0.3;
+
+//Posición de camara
+//camera.position.y = 5000;
+camera.position.z = 7000;
+
+//OrbitControls
+var controls = new OrbitControls(camera, renderer.domElement);
+//controls.target = p_earth.position;
+controls.enableDamping = true;
+controls.mouseButtons = {
+    LEFT: THREE.MOUSE.ROTATE,
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT: THREE.MOUSE.PAN
+}
+
+
+var step_mercury = 20;
+var step_venus = 10;
+var step_earth = 0;
+var step_moon = 0;
+var step_mars = 40;
+var step_jupiter = 30;
+var step_saturn = 25;
+var step_uranus = 15;
+var step_neptune = 5;
+
+
+//sun.position.y = -2000;
+
+//animation
+var animate = function () {
     requestAnimationFrame(animate);
+    
+    if (sun.position.y == 23000) {
+        sun.position.y = -6000;
+    }
 
-    // Rotación del Sol
     sun.rotation.y += 0.01;
+    p_mercury.rotation.y += 0.01;
+    p_venus.rotation.y += 0.01;
+    p_earth.rotation.y += 0.02;
+    moon.rotation.y += 0.01;
+    p_mars.rotation.y += 0.01;
+    p_jupiter.rotation.y += 0.01;
+    //p_saturn.rotation.y += 0.01;
+    p_uranus.rotation.y += 0.01;
+    p_neptune.rotation.y += 0.01;
 
-    // Movimiento automático de todos los planetas
-    planets.forEach(planet => {
-        // Rotación sobre su propio eje
-        planet.mesh.rotation.y += 0.01; 
+    step_mercury += 0.008;
+    p_mercury.position.x = ( dist_orbit_mercury * (Math.sin(step_mercury)));
+    p_mercury.position.z = ( dist_orbit_mercury * (Math.cos(step_mercury)));
 
-        // Actualizar el ángulo para el movimiento orbital
-        planet.angle += planet.speed;
+    step_venus += 0.007;
+    p_venus.position.z = ( dist_orbit_venus * (Math.cos(step_venus)));
+    p_venus.position.x = ( dist_orbit_venus * (Math.sin(step_venus)));
 
-        // Posición en la órbita (Movimiento circular)
-        planet.mesh.position.x = planet.orbitDist * Math.sin(planet.angle);
-        planet.mesh.position.z = planet.orbitDist * Math.cos(planet.angle);
-    });
+    step_earth += 0.005;
+    p_earth.position.x = ( dist_orbit_earth * (Math.sin(step_earth)));
+    p_earth.position.z = ( dist_orbit_earth * (Math.cos(step_earth)));
 
-    // Nota: El código original de Saturno y la Luna necesita lógica adicional 
-    // porque dependen de la posición de otro planeta, puedes tratarlos como "Hijos" (Object3D) 
-    // o calcularlos manualmente aquí.
+    step_moon += 0.07;
+    moon.position.x = p_earth.position.x + ( dist_orbit_moon * (Math.sin(step_moon)));
+    moon.position.z = p_earth.position.z + ( dist_orbit_moon * (Math.cos(step_moon)));
 
+    step_mars += 0.003;
+    p_mars.position.x = ( dist_orbit_mars * (Math.sin(step_mars)));
+    p_mars.position.z = ( dist_orbit_mars * (Math.cos(step_mars)));
+
+    step_jupiter += 0.002;
+    p_jupiter.position.x = ( dist_orbit_jupiter * (Math.sin(step_jupiter)));
+    p_jupiter.position.z = ( dist_orbit_jupiter * (Math.cos(step_jupiter)));
+
+    step_saturn += 0.0015;
+    p_saturn.position.x = ( dist_orbit_saturn * (Math.sin(step_saturn)));
+    p_saturn.position.z = ( dist_orbit_saturn * (Math.cos(step_saturn)));
+    
+    ring_saturn.position.x = ( dist_orbit_saturn * (Math.sin(step_saturn)));
+    ring_saturn.position.z = ( dist_orbit_saturn * (Math.cos(step_saturn)));
+
+    step_uranus += 0.0012;
+    p_uranus.position.x = ( dist_orbit_uranus * (Math.sin(step_uranus)));
+    p_uranus.position.z = ( dist_orbit_uranus * (Math.cos(step_uranus)));
+
+    step_neptune += 0.001;
+    p_neptune.position.x = ( dist_orbit_neptune * (Math.sin(step_neptune)));
+    p_neptune.position.z = ( dist_orbit_neptune * (Math.cos(step_neptune)));
+
+
+    /* sun.position.y += 0;
+    orbit_earth.position.y = sun.position.y
+    orbit_venus.position.y = sun.position.y
+    orbit_mercury.position.y = sun.position.y
+    p_earth.position.y = sun.position.y
+    moon.position.y = sun.position.y
+    p_mercury.position.y = sun.position.y
+    p_venus.position.y = sun.position.y */
+
+
+    //camara siguiendo orbita de la tierra con el sol
+    //camera.position.x = sun.position.x + ( 1500 * (Math.sin(step3)));
+    //camera.position.z = sun.position.z + ( 1500 * (Math.cos(step3)));
+    //camara siguiendo orbita de la tierra misma 
+    //camera.position.x = p_earth.position.x + ( 200 * (Math.sin(step4)));
+    //camera.position.z = p_earth.position.z + ( 200 * (Math.cos(step4)));
+
+    
+
+    //fijar que ve la camara
+    //camera.lookAt(sun.position);
+    //controls.target = sun.position;
     controls.update();
     renderer.render(scene, camera);
-}
+    stats.update();
+};
 
 animate();
